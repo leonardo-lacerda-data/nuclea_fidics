@@ -1,0 +1,35 @@
+
+
+Boa tarde!
+
+
+Seguem as bases que combinamos enviar para ajudarem no desenvolvimento 
+da solução do Challenge Fiap 2025 Núclea.
+
+Abaixo algumas informações que vão auxiliar na interpretação e uso das bases.
+
+ 
+
+Base 1: base_boletos (~7000 boletos)
+
+Essa base é basicamente uma amostra da PCR, de boletos que foram cedidos pra FIDCs, 
+a diferença é que temos o sacador avalista como beneficiário para simular o cenário 
+antes da cessão.
+
+Colunas:
+---------
+IDs anonimizados: boleto, pagador, beneficiario
+Datas: emissão, vencimento, pagamento
+Valores: nominal, baixa
+Outros: tipo de baixa e tipo de especie
+ 
+
+Base 2: base_auxiliar (4613 CNPJs)
+
+Essa base contém outras informações e produtos internos nossos. 
+Vai servir para fazem o cruzamento pelo id do CNPJ e para pegarem 
+informações extras. Mantive as colunas:
+
+CNAE, UF
+Produtos: liquidez, scores (mat, qtd, mat evo), produtos de inadimplência
+
