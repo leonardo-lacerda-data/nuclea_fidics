@@ -12,6 +12,7 @@ O objetivo deste pipeline é transformar arquivos brutos (`.csv`) em tabelas est
 | :--- | :--- |
 | `cria_tabelas_bussola.sql` | **DDL (Data Definition Language):** Script SQL que cria a estrutura do banco de dados, definindo chaves primárias, estrangeiras e constraints de validação (ex: UF válida, Flag 0/1). |
 | `Ingestao_Tratamento_Dados_Nuclea.ipynb` | **ETL Pipeline:** Jupyter Notebook que lê os CSVs, aplica regras de negócio, limpa inconsistências e realiza a carga em lote (*Bulk Insert*) no Oracle. |
+| `views_engenharia_dados.sql` | **DDL (Data Definition Language):** View criada no Oracle SQL Developer para ajudar na integração do Power BI em nosso projeto. |
 
 ---
 
