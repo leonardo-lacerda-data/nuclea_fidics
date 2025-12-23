@@ -16,12 +16,11 @@ SELECT
          WHEN b.nr_dias_atraso > 5 AND b.nr_dias_atraso <= 30 THEN '2. Atraso Curto (6 - 30 dias)'
          WHEN b.nr_dias_atraso > 30 AND b.nr_dias_atraso <= 60 THEN '3. Atraso Médio (31 - 60 dias)'
          ELSE '4. Atraso Longo (+60 dias)'
-         END AS fx_atraso
+         END AS fx_atraso,
     e.sg_uf,
     e.cd_cnae,
     e.vl_score_materialidade,
-    e.vl_score_liquidez
-
+    e.vl_score_quantidade
 FROM T_BF_BOLETO b
 LEFT JOIN T_BF_EMPRESA e
 ON b.id_pagador = e.id_empresa;
