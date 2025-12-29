@@ -1,68 +1,54 @@
-# 🏗️ Módulo de Engenharia de Dados - Bússola de FIDCs
+# 🧭 Bússola de FIDCs - Análise de Risco de Crédito (FIAP + Núclea)
 
-Este diretório contém os scripts responsáveis pela **Ingestão, Tratamento (ETL) e Persistência** dos dados transacionais da parceria **FIAP + Núclea**.
+Este repositório contém a solução de **Engenharia de Dados e Machine Learning** desenvolvida para o Enterprise Challenge da FIAP, em parceria com a **Núclea**.
 
-O objetivo deste pipeline é transformar arquivos brutos (`.csv`) em tabelas estruturadas no Oracle Database, criando a "Fonte de Verdade" para os modelos de Machine Learning e Dashboards do projeto.
+O objetivo do projeto é prever a inadimplência de títulos (boletos) utilizando uma abordagem de **Lakehouse Oracle**, enriquecida com indicadores macroeconômicos reais (IBGE/Bacen) para calcular o risco sistêmico de diferentes setores da economia.
 
----
+## 🏗️ Arquitetura do Projeto
 
-## 📂 Arquivos do Repositório
+O projeto segue um pipeline linear de dados:
+1.  **Ingestão:** Dados transacionais (Núclea) e Externos (Gov).
+2.  **Armazenamento:** Oracle Database (Cloud).
+3.  **Refinaria (Views):** Feature Engineering via SQL para cruzar CNPJ (Setor) com Economia.
+4.  **Inteligência:** Modelo de Regressão Logística para Score de Risco.
 
-| Arquivo | Descrição |
-| :--- | :--- |
-| `cria_tabelas_bussola.sql` | **DDL (Data Definition Language):** Script SQL que cria a estrutura do banco de dados, definindo chaves primárias, estrangeiras e constraints de validação (ex: UF válida, Flag 0/1). |
-| `Ingestao_Tratamento_Dados_Nuclea.ipynb` | **ETL Pipeline:** Jupyter Notebook que lê os CSVs, aplica regras de negócio, limpa inconsistências e realiza a carga em lote (*Bulk Insert*) no Oracle. |
-| `views_engenharia_dados.sql` | **DDL (Data Definition Language):** View criada no Oracle SQL Developer para ajudar na integração do Power BI em nosso projeto. |
+## 📂 Estrutura dos Arquivos
 
----
+Os scripts devem ser executados na ordem abaixo para garantir a integridade referencial do banco de dados:
 
-## ⚙️ Regras de Negócio e Tratamento de Dados
+### 1. Infraestrutura (SQL)
+* `BF_Cria_Tabelas.sql`: Script DDL. Cria a estrutura das tabelas (`T_BF_BOLETO`, `T_BF_EMPRESA`, `T_BF_MACRO_ECONOMIA`, `T_BF_PREDICOES`) e sequences.
+* `BF_Cria_Views.sql`: Script DML. Cria a inteligência do projeto (`V_BF_TREINO_ML`), responsável por cruzar os dados da empresa com os indicadores econômicos da data de vencimento do boleto.
 
-Durante o processo de ETL, foram aplicadas as seguintes regras para garantir a integridade da análise de risco:
+### 2. ETL e Engenharia de Dados (Python/Jupyter)
+* `BF_ETL_IBGE_BACEN_Versão_2.ipynb`: **(Executar Primeiro)** Coleta, trata e insere indicadores econômicos reais:
+    * **Financeiros:** Selic, Dólar (PTAX), PIB Mensal (IBC-Br).
+    * **Setoriais:** Varejo (PMC), Indústria (PIM), Serviços (PMS).
+    * **Sociais:** Desemprego e Inflação (IPCA).
+* `BF_ETL_Dados_Nuclea_Versão_2_Dados_Falsos.ipynb`: **(Executar Segundo)** Processa a base de boletos da Nuclea.
+    * *Nota:* Este script contém uma engine de **Data Augmentation** ("Máquina do Tempo") que distribui os boletos aleatoriamente entre 2023 e 2024 para simular sazonalidade econômica e permitir o aprendizado do modelo.
 
-### 1. Cálculo de Atraso e Target (Alvo)
-A variável alvo para o modelo de risco (`alvo_inadimplencia`) foi calculada na engenharia para garantir consistência entre DS e BI:
-* **Boletos Pagos:** `Data Pagamento - Data Vencimento`.
-* **Boletos em Aberto:** `Data Atual (Hoje) - Data Vencimento`.
-* **Regra:** Se `Dias de Atraso > 0`, o boleto é marcado como **Inadimplente (1)**. Caso contrário, **Em dia (0)**.
-
-### 2. Saneamento de Valores Monetários
-* Campos com formatação de texto (ex: `R$ 1.200,50`) foram convertidos para `FLOAT`.
-* **Baixa Nula:** Registros com "Tipo de Baixa" mas sem "Valor de Baixa" foram preenchidos com **0.00**, assumindo-se baixa contábil (devolução/cancelamento) e não financeira.
-
-### 3. Tratamento de Localidade (Geospatial)
-* Empresas sem UF informada na base auxiliar não foram descartadas para preservar seus Scores de Crédito.
-* **Imputação:** O campo UF foi preenchido com a sigla **'ND'** (Não Definido), permitindo análise segregada no Dashboard.
+### 3. Machine Learning
+* `BF_ML_Regressão_Logística_Versão_1.ipynb`: Conecta na View do Oracle, treina o modelo preditivo considerando variáveis macroeconômicas e salva o `Score de Risco` e a `Probabilidade de Default` na tabela de predições.
 
 ---
 
 ## 🚀 Como Executar
 
-### Pré-requisitos
-* Python 3.x
-* Bibliotecas: `pandas`, `numpy`, `oracledb`
-* Acesso a uma instância Oracle Database.
+1.  **Banco de Dados:** Rode os scripts `.sql` no Oracle SQL Developer para criar tabelas e views.
+2.  **Ambiente Python:** Instale as dependências:
+    ```bash
+    pip install pandas oracledb scikit-learn numpy python-dotenv
+    ```
+3.  **Carga de Dados:**
+    * Execute o notebook `BF_ETL_IBGE_BACEN_Versão_2.ipynb` para popular a tabela macroeconômica.
+    * Execute o notebook `BF_ETL_Dados_Nuclea_Versão_2_Dados_Falsos.ipynb` para popular os boletos e simular o histórico.
+4.  **Predição:**
+    * Execute o notebook `BF_ML_Regressão_Logística_Versão_1.ipynb`.
+    * Ao final, consulte a tabela `T_BF_PREDICOES` para ver os resultados.
 
-### Passo a Passo
-1.  **Preparação do Banco:**
-    Execute o script `cria_tabelas_bussola_fidics.sql` no seu cliente Oracle (SQL Developer, DBeaver, etc) para criar as tabelas `T_BF_EMPRESA` e `T_BF_BOLETO`.
+## 📊 Destaques Técnicos
 
-2.  **Execução do Pipeline:**
-    Abra o notebook `Ingestao_Tratamento_Dados_Nuclea.ipynb`. Certifique-se de que os arquivos `base_boletos.csv` e `base_auxiliar.csv` estejam no mesmo diretório (ou ajustados no caminho do código).
-    
-3.  **Configuração de Credenciais:**
-    No notebook, ajuste as variáveis `db_user`, `db_pass` e `db_dsn` com suas credenciais Oracle.
-
-4.  **Run All:**
-    Execute todas as células. O script finalizará com a mensagem:
-    > `✅ CARGA FINALIZADA COM SUCESSO!`
-
----
-
-## 📊 Estrutura do Banco de Dados (Schema)
-
-* **T_BF_BOLETO:** Tabela Fato contendo as transações, datas, valores e flags de atraso.
-* **T_BF_EMPRESA:** Tabela Dimensão contendo dados cadastrais, CNAE e Scores de Liquidez/Maturidade da Núclea.
-
----
-*Desenvolvido pela equipe Welcome To The DataFrame - FIAP 2025*
+* **Enriquecimento Macro:** O modelo não olha apenas para o boleto, mas entende se o setor da empresa (Indústria/Comércio/Serviços) está em crise no momento do vencimento.
+* **Tratamento Temporal:** Solução para evitar *Look-ahead Bias* usando a lógica `FETCH FIRST 1 ROW ONLY` nas Views SQL, garantindo que o modelo só veja dados disponíveis até a data do vencimento.
+* **Data Augmentation:** Algoritmo desenvolvido para transformar um dataset estático em uma série temporal rica para treinamento de IA.
