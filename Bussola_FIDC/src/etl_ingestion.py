@@ -280,4 +280,5 @@ def carregar_macro():
 def carregar_dados():
     carregar_empresas()
     carregar_boletos()
+
     carregar_macro()
