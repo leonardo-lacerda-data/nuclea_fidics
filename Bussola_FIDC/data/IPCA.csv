@@ -1,0 +1,26 @@
+﻿"Tabela 1737 - IPCA - Série histórica com número-índice, variação mensal e variações acumuladas em 3 meses, em 6 meses, no ano e em 12 meses (a partir de dezembro/1979)"
+"Variável - IPCA - Variação mensal (%)"
+"","Mês"
+"","dezembro 2023","janeiro 2024","fevereiro 2024","março 2024","abril 2024","maio 2024","junho 2024","julho 2024","agosto 2024","setembro 2024","outubro 2024","novembro 2024","dezembro 2024","janeiro 2025","fevereiro 2025","março 2025","abril 2025","maio 2025","junho 2025","julho 2025","agosto 2025","setembro 2025","outubro 2025","novembro 2025"
+"Brasil","0.56","0.42","0.83","0.16","0.38","0.46","0.21","0.38","-0.02","0.44","0.56","0.39","0.52","0.16","1.31","0.56","0.43","0.26","0.24","0.26","-0.11","0.48","0.09","0.18"
+"Fonte: IBGE - Índice Nacional de Preços ao Consumidor Amplo"
+
+"Notas"
+"1 - Período de coleta ajustado ao mês civil (do primeiro ao trigésimo dia de cada mês), para os meses anteriores a março de 1986."
+""
+"Legenda"
+"Símbolo","Significado"
+"-","Zero absoluto, não resultante de um cálculo ou arredondamento.
+Ex: Em determinado município não existem pessoas de 14 anos de idade sem instrução."
+"0","Zero resultante de um cálculo ou arredondamento.
+Ex: A inflação do feijão em determinada Região Metropolitana foi 0.
+Determinado município produziu 400 kg de sementes de girassol e os dados da tabela são expressos em toneladas."
+"X","Valor inibido para não identificar o informante.
+Ex: Determinado município só possui uma empresa produtora de cimento, logo o valor de sua produção deve ser inibido."
+"..","Valor não se aplica.
+Ex: Não se pode obter o total da produção agrícola em determinado município quando os produtos agrícolas são contabilizados com unidades de medida distintas."
+"...","Valor não disponível.
+Ex: A produção de feijão em determinado município não foi pesquisada ou determinado município não existia no ano da pesquisa."
+"A a Z
+(exceto X)","Significa uma faixa de valores. Varia em função da tabela (se for o caso).
+Ex: O nível de precisão da produção estimada de combustíveis está na faixa A (95 a 100%)"
