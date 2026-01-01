@@ -1,4 +1,4 @@
-from src.database import get_connection
+from src.db_connection import get_connection
 
 def atualizar_view_ml():
     print("📊 Atualizando View do ML..")
@@ -7,8 +7,8 @@ def atualizar_view_ml():
     if conn:
         cursor = conn.cursor()
 
-        sql_view_ml = """
-        CREATE OR REPLACE VIEW V_BF_TREINO_ML AS
+        sql_view_ml_risco = """
+        CREATE OR REPLACE VIEW V_BF_TREINO_ML_RISCO AS
         SELECT
             -- Informações do boleto
             b.id_boleto,
@@ -22,12 +22,13 @@ def atualizar_view_ml():
             COALESCE(e.vl_score_quantidade, 0) as vl_score_quantidade,
 
             -- Para ligar com as notícias
+            -- Também vai ser usado no ML em si, então precisamos que seja numérico
             CASE 
-                WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '05' AND '33' THEN 'INDUSTRIA'
-                WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '45' AND '47' THEN 'VAREJO'
-                WHEN SUBSTR(e.cd_cnae, 1, 2) >= '49' THEN 'SERVICOS'
-                ELSE 'OUTROS'
-            END as ds_setor_macro,
+                WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '05' AND '33' THEN 01
+                WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '45' AND '47' THEN 02
+                WHEN SUBSTR(e.cd_cnae, 1, 2) >= '49' THEN 03
+                ELSE 04
+            END as vl_setor_macro,
 
             -- SELIC
             (SELECT m.vl_indicador FROM T_BF_MACRO_ECONOMIA m 
@@ -41,29 +42,29 @@ def atualizar_view_ml():
 
             -- DESEMPREGO
             (SELECT m.vl_indicador FROM T_BF_MACRO_ECONOMIA m 
-             WHERE m.nm_indicador = 'DESEMPREGO' AND m.sg_uf = 'BR' AND m.dt_referencia <= b.dt_vencimento 
+             WHERE m.nm_indicador = 'TAX_DESEMPREGO' AND m.sg_uf = 'BR' AND m.dt_referencia <= b.dt_vencimento 
              ORDER BY m.dt_referencia DESC FETCH FIRST 1 ROW ONLY) as tax_desemprego,
 
             -- PIB
             (SELECT m.vl_indicador FROM T_BF_MACRO_ECONOMIA m 
-             WHERE m.nm_indicador = 'PIB' AND m.sg_uf = 'BR' AND m.dt_referencia <= b.dt_vencimento 
+             WHERE m.nm_indicador = 'IBC-BR' AND m.sg_uf = 'BR' AND m.dt_referencia <= b.dt_vencimento 
              ORDER BY m.dt_referencia DESC FETCH FIRST 1 ROW ONLY) as indice_pib,
 
             -- VAREJO
             COALESCE(
                 (SELECT m.vl_indicador FROM T_BF_MACRO_ECONOMIA m 
-                 WHERE m.nm_indicador = 'PMC' AND m.sg_uf = e.sg_uf AND m.dt_referencia <= b.dt_vencimento
+                 WHERE m.nm_indicador = 'IND_VAREJO' AND m.sg_uf = e.sg_uf AND m.dt_referencia <= b.dt_vencimento
                  ORDER BY m.dt_referencia DESC FETCH FIRST 1 ROW ONLY),
-                (SELECT AVG(m2.vl_indicador) FROM T_BF_MACRO_ECONOMIA m2 WHERE m2.nm_indicador = 'PMC')
+                (SELECT AVG(m2.vl_indicador) FROM T_BF_MACRO_ECONOMIA m2 WHERE m2.nm_indicador = 'IND_VAREJO')
             ) as var_varejo,
 
             -- INDÚSTRIA
             COALESCE(
                 (SELECT m.vl_indicador FROM T_BF_MACRO_ECONOMIA m 
-                 WHERE m.nm_indicador = 'PIM' AND m.sg_uf = e.sg_uf AND m.dt_referencia <= b.dt_vencimento
+                 WHERE m.nm_indicador = 'IND_INDUSTRIA' AND m.sg_uf = e.sg_uf AND m.dt_referencia <= b.dt_vencimento
                  ORDER BY m.dt_referencia DESC FETCH FIRST 1 ROW ONLY),
                 (SELECT m2.vl_indicador FROM T_BF_MACRO_ECONOMIA m2 
-                 WHERE m2.nm_indicador = 'PIM' AND m2.sg_uf = 'BR'
+                 WHERE m2.nm_indicador = 'IND_INDUSTRIA' AND m2.sg_uf = 'BR'
                    AND m2.dt_referencia <= b.dt_vencimento
                  ORDER BY m2.dt_referencia DESC FETCH FIRST 1 ROW ONLY)
             ) as var_industria,
@@ -71,9 +72,9 @@ def atualizar_view_ml():
             -- SERVIÇOS
             COALESCE(
                 (SELECT m.vl_indicador FROM T_BF_MACRO_ECONOMIA m 
-                 WHERE m.nm_indicador = 'PMS' AND m.sg_uf = e.sg_uf AND m.dt_referencia <= b.dt_vencimento
+                 WHERE m.nm_indicador = 'IND_SERVICOS' AND m.sg_uf = e.sg_uf AND m.dt_referencia <= b.dt_vencimento
                  ORDER BY m.dt_referencia DESC FETCH FIRST 1 ROW ONLY),
-                (SELECT AVG(m2.vl_indicador) FROM T_BF_MACRO_ECONOMIA m2 WHERE m2.nm_indicador = 'PMS')
+                (SELECT AVG(m2.vl_indicador) FROM T_BF_MACRO_ECONOMIA m2 WHERE m2.nm_indicador = 'IND_SERVICOS')
             ) as var_servicos,
 
             -- ANÁLISE DE SENTIMENTOS
@@ -98,8 +99,20 @@ def atualizar_view_ml():
         JOIN T_BF_EMPRESA e ON b.id_pagador = e.id_empresa
         """
 
+        sql_view_ml_cluster = """
+        CREATE OR REPLACE VIEW V_BF_TREINO_ML_CLUSTER AS
+        SELECT b.id_pagador,
+            COUNT(b.ID_BOLETO) AS nr_frequencia_compra,
+            AVG(b.VL_NOMINAL) AS vl_ticket_medio,
+            AVG(CASE WHEN b.NR_DIAS_ATRASO > 0 THEN b.NR_DIAS_ATRASO ELSE 0 END) AS vl_medio_dias_atraso,
+            MAX(b.VL_NOMINAL) AS vl_maior_boleto
+        FROM T_BF_BOLETO b
+        GROUP BY b.ID_PAGADOR
+        """
+
         try:
-            cursor.execute(sql_view_ml)
+            cursor.execute(sql_view_ml_risco)
+            cursor.execute(sql_view_ml_cluster)
             print("   ✅ View V_BF_TREINO_ML atualizada.")
         except Exception as e:
             print(f"   ❌ Erro View ML: {e}")
@@ -141,7 +154,7 @@ def atualizar_view_pbi():
             END as ds_setor_economico,
         
             -- 3. INTELIGÊNCIA PREDITIVA (O Futuro - Random Forest)
-            COALESCE(p.vl_probabilidade_inadimplencia, 0) as vl_score_risco,
+            ROUND(COALESCE(p.vl_probabilidade_inadimplencia, 0),4) as vl_score_risco,
             COALESCE(p.st_faixa_risco, 'N/A') as ds_faixa_risco,
             COALESCE(p.ds_principal, 'Em análise') as ds_motivo_risco,
         
@@ -149,7 +162,7 @@ def atualizar_view_pbi():
             COALESCE(c.ds_perfil, 'Não Classificado') as ds_perfil_comportamental,
             
             -- 5. TERMÔMETRO DE MERCADO (O NLP - Sentimento)
-            COALESCE(
+            ROUND(COALESCE(
                 (SELECT AVG(n.vl_sentimento)
                  FROM T_BF_NOTICIAS n
                  WHERE n.ds_setor = 
@@ -161,7 +174,7 @@ def atualizar_view_pbi():
                        END
                    AND n.dt_publicacao BETWEEN (b.dt_vencimento - 30) AND b.dt_vencimento
                 ), 0
-            ) as vl_sentimento_setor,
+            ),4) AS vl_sentimento_setor,
         
             -- Classificação Visual do Sentimento (Para cor no Power BI)
             CASE 
@@ -174,7 +187,7 @@ def atualizar_view_pbi():
         JOIN T_BF_EMPRESA e ON b.id_pagador = e.id_empresa
         -- Left Join: Se o boleto for novo e não tiver passado na IA ainda, não some, só fica NULL
         LEFT JOIN T_BF_PREDICOES p ON b.id_boleto = p.id_boleto
-        LEFT JOIN T_BF_CLUSTER c ON b.id_boleto = c.id_boleto 
+        LEFT JOIN T_BF_CLUSTER c ON b.id_boleto = c.id_boleto
         """
 
         try:
