@@ -1,21 +1,25 @@
-# --- Infraestrutura e Banco de Dados ---
-oracledb==2.5.0
-python-dotenv==1.0.1
+# Manipulação de Dados e Numérico
+pandas
+numpy
 
-# --- Manipulação de Dados ---
-pandas==2.2.0
-numpy==1.26.3
+# Banco de Dados e Variáveis de Ambiente
+oracledb
+python-dotenv
 
-# --- Coleta e NLP (Spacy + BERT) ---
-feedparser==6.0.11
-spacy==3.7.2
-pysentimiento==0.7.3
+# Machine Learning
+scikit-learn
+joblib
 
-# --- Machine Learning ---
-scikit-learn==1.4.0
+# APIs e Web Scraping
+requests
+feedparser
+beautifulsoup4
+lxml
+GoogleNews
 
-# --- Dependências Pesadas (Hugging Face / Torch) ---
-# Fixamos estas para o PySentimiento não brigar com versões novas
-torch==2.2.0
-transformers==4.37.2
-tqdm==4.66.1
+# Processamento de Linguagem Natural (NLP) e IA
+spacy
+pysentimiento
+torch
+transformers
+accelerate
