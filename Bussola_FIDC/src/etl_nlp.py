@@ -200,7 +200,7 @@ def carregar_historico_google(bert_analyzer, dias_atras=730):
         googlenews.search(termo)
 
         # Percorre até 5 páginas para ter volume (~50 news por setor)
-        for pagina in range(1, 16):
+        for pagina in range(1, 11):
             googlenews.get_page(pagina)
             resultados = googlenews.result()
 
@@ -282,5 +282,6 @@ def executar_etl_noticias():
     if not lista_final:
         print("   ⚠️ Nenhuma notícia encontrada.")
         return
+
 
     alimentando_banco_dados()
