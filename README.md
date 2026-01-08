@@ -47,6 +47,16 @@ Antes de rodar qualquer coisa, instale o driver que permite a conexão com o Ora
 * **Microsoft Power BI Desktop** (Para abrir os relatórios visuais)
     * Necessário para visualizar e editar o arquivo `.pbix`.
     * [Download Oficial Microsoft](https://www.microsoft.com/pt-br/download/details.aspx?id=58494)
+ 
+## 🚀 Instalação e Execução
+
+Siga os passos abaixo no seu terminal (Git Bash ou VS Code):
+
+### Passo 1: Clonar o Repositório
+Baixe o código para a sua máquina:
+```bash
+git clone [https://github.com/leonardo-lacerda-data/nuclea_fidics.git](https://github.com/leonardo-lacerda-data/nuclea_fidics.git)
+cd nuclea_fidics
 
 ### Stack Tecnológica
 * ![Python](https://img.shields.io/badge/Python-3.9+-blue) **Linguagem Principal** (Pandas, NumPy, Matplotlib).
