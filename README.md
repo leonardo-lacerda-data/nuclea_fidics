@@ -57,6 +57,7 @@ Baixe o código para a sua máquina:
 ```bash
 git clone [https://github.com/leonardo-lacerda-data/nuclea_fidics.git](https://github.com/leonardo-lacerda-data/nuclea_fidics.git)
 cd nuclea_fidics
+```
 
 ### Stack Tecnológica
 * ![Python](https://img.shields.io/badge/Python-3.9+-blue) **Linguagem Principal** (Pandas, NumPy, Matplotlib).
