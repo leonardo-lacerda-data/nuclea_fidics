@@ -43,7 +43,7 @@ Antes de rodar qualquer coisa, instale o driver que permite a conexão com o Ora
     * [Clique aqui para baixar](https://www.oracle.com/database/technologies/appdev/ocmt.html)
     * **Importante:** Após instalar, reinicie o computador. Sem isso, o Power BI dará erro de "Driver não encontrado".
 
-### 1. Softwares Necessários
+### 2. Softwares Necessários
 * **Microsoft Power BI Desktop** (Para abrir os relatórios visuais)
     * Necessário para visualizar e editar o arquivo `.pbix`.
     * [Download Oficial Microsoft](https://www.microsoft.com/pt-br/download/details.aspx?id=58494)
