@@ -33,6 +33,21 @@ O projeto está dividido em três camadas principais, desenvolvidas em paralelo 
 * **Visualização (Power BI):**
     * Dashboards interativos (Visão Executiva, Operacional e Oportunidades).
 
+## 🛠️ Pré-requisitos de Instalação
+
+Para que o projeto funcione (tanto o Script Python quanto o Power BI), você precisa configurar o ambiente abaixo:
+
+### 1. Dependências do Sistema (Obrigatório)
+Antes de rodar qualquer coisa, instale o driver que permite a conexão com o Oracle:
+* **Oracle Client for Microsoft Tools (64-bit)**
+    * [Clique aqui para baixar](https://www.oracle.com/database/technologies/appdev/ocmt.html)
+    * **Importante:** Após instalar, reinicie o computador. Sem isso, o Power BI dará erro de "Driver não encontrado".
+
+### 1. Softwares Necessários
+* **Microsoft Power BI Desktop** (Para abrir os relatórios visuais)
+    * Necessário para visualizar e editar o arquivo `.pbix`.
+    * [Download Oficial Microsoft](https://www.microsoft.com/pt-br/download/details.aspx?id=58494)
+
 ### Stack Tecnológica
 * ![Python](https://img.shields.io/badge/Python-3.9+-blue) **Linguagem Principal** (Pandas, NumPy, Matplotlib).
 * ![Oracle](https://img.shields.io/badge/Oracle-Database-red) **Armazenamento** (Driver `oracledb`).
