@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from GoogleNews import GoogleNews
 from pysentimiento import create_analyzer
-from src.db_connection import get_connection
+from src.db_connection import get_connection, close_connection
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
@@ -180,9 +180,15 @@ def carregar_historico_google(bert_analyzer, dias_atras=730):
     googlenews = GoogleNews(lang='pt', region='BR')
 
     # Define Janela de Tempo
-    start_date = (datetime.now() - pd.DateOffset(days=dias_atras)).strftime('%m/%d/%Y')
-    end_date = (datetime.now() - pd.DateOffset(days=1)).strftime('%m/%d/%Y')
-    googlenews.set_time_range(start_date, end_date)
+    start_dt = datetime.now() - pd.DateOffset(days=dias_atras)
+    end_dt = datetime.now() - pd.DateOffset(days=1)
+    # Strings no formato esperado pelo GoogleNews
+    start_date_str = start_dt.strftime('%m/%d/%Y')
+    end_date_str = end_dt.strftime('%m/%d/%Y')
+    googlenews.set_time_range(start_date_str, end_date_str)
+    # Objetos date para comparações no código
+    start_date = start_dt.date()
+    end_date = end_dt.date()
 
     dados = []
     ids_vistos = set()
@@ -240,28 +246,39 @@ def carregar_historico_google(bert_analyzer, dias_atras=730):
 def alimentando_banco_dados():
     try:
         conn = get_connection()
-        if conn:
-            cursor = conn.cursor()
+        if not conn:
+            print("   ⚠️ Conexão com o banco não pôde ser estabelecida. Abortando operação de gravação.")
+            return
 
-            # DICA: Se for rodar histórico, talvez não queira TRUNCATE (apagar tudo).
-            # Se quiser acumular, tire o TRUNCATE. Se quiser limpar e refazer, deixe.
-            print("   🧹 Limpando tabela antiga...")
-            cursor.execute("TRUNCATE TABLE T_BF_NOTICIAS")
+        cursor = conn.cursor()
 
-            print(f"   💾 Salvando {len(lista_final)} notícias no Oracle...")
-            sql_insert = """
+        # DICA: Se for rodar histórico, talvez não queira TRUNCATE (apagar tudo).
+        # Se quiser acumular, tire o TRUNCATE. Se quiser limpar e refazer, deixe.
+        print("   🧹 Limpando tabela antiga...")
+        cursor.execute("TRUNCATE TABLE T_BF_NOTICIAS")
+
+        print(f"   💾 Salvando {len(lista_final)} notícias no Oracle...")
+        sql_insert = """
                          INSERT INTO T_BF_NOTICIAS (ds_setor, tx_titulo, vl_sentimento, dt_publicacao, tx_link)
                          VALUES (:1, :2, :3, :4, :5) \
                          """
-            cursor.executemany(sql_insert, lista_final)
-            conn.commit()
-            print("   ✅ Sucesso!")
+        cursor.executemany(sql_insert, lista_final)
+        conn.commit()
+        print("   ✅ Sucesso!")
 
     except Exception as e:
-        conn.rollback()
+        if 'conn' in locals() and conn:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
         print(f"❌ Erro banco: {e}")
     finally:
-        conn.close()
+        if 'conn' in locals() and conn:
+            try:
+                close_connection()
+            except Exception:
+                pass
 
 def executar_etl_noticias():
     print("\n📰 [ETL NLP] Iniciando Pipeline...")

@@ -1,7 +1,7 @@
 import requests
 import pandas as pd
 from datetime import datetime
-from src.db_connection import get_connection
+from src.db_connection import get_connection, close_connection
 
 # Filtrando pelos dados dos últimos dois anos
 data_inicial = (pd.to_datetime(datetime.now()) - pd.DateOffset(years=2)).strftime('%d/%m/%Y')
@@ -256,17 +256,42 @@ def alimentar_tabela_macro():
 
     try:
         for i, df in enumerate(dfs_finais):
-            dados = df.values.tolist()
-            cursor.executemany(sql_insert_macro, dados)
-            total_inserido += len(dados)
-            print(f"   -> Lote {i + 1}: {len(dados)} linhas inseridas.")
+                # Ignora DataFrames vazios
+                if df is None or df.empty:
+                    print(f"   -> Lote {i + 1}: vazio, pulando.")
+                    continue
+
+                df = df.copy()
+
+                # Garante tipos corretos: VL_INDICADOR como float (nativo Python) e DT_REFERENCIA como date
+                if 'VL_INDICADOR' in df.columns:
+                    df['VL_INDICADOR'] = pd.to_numeric(df['VL_INDICADOR'], errors='coerce').fillna(0.0).astype(float)
+                else:
+                    df['VL_INDICADOR'] = 0.0
+
+                if 'DT_REFERENCIA' in df.columns:
+                    df['DT_REFERENCIA'] = pd.to_datetime(df['DT_REFERENCIA'], errors='coerce')
+                    df['DT_REFERENCIA'] = df['DT_REFERENCIA'].apply(lambda x: x.date() if not pd.isna(x) else None)
+                else:
+                    df['DT_REFERENCIA'] = None
+
+                # Substitui NaNs por None para o driver do Oracle
+                df = df.where(pd.notnull(df), None)
+
+                dados = df[['SG_UF', 'DT_REFERENCIA', 'NM_INDICADOR', 'VL_INDICADOR']].values.tolist()
+        cursor.executemany(sql_insert_macro, dados)
+        total_inserido += len(dados)
+        print(f"   -> Lote {i + 1}: {len(dados)} linhas inseridas.")
 
         conn.commit()
         print(f"      ✅ {total_inserido} indicadores carregados.")
     except Exception as e:
         print(f"      ❌ Erro ao inserir dados macro: {e}")
     finally:
-        conn.close()
+        try:
+            close_connection()
+        except Exception:
+            pass
 
 def carregar_api():
     print("\n--- UTILIZANDO API DADOS EXTERNOS ---")

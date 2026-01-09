@@ -1,4 +1,4 @@
-from src.db_connection import get_connection
+from src.db_connection import get_connection, close_connection
 
 def atualizar_view_ml():
     print("📊 Atualizando View do ML..")
@@ -117,7 +117,10 @@ def atualizar_view_ml():
         except Exception as e:
             print(f"   ❌ Erro View ML: {e}")
         finally:
-            conn.close()
+            try:
+                close_connection()
+            except Exception:
+                pass
 
 def atualizar_view_pbi():
     print("📊 Atualizando View do Power BI..")
@@ -196,4 +199,7 @@ def atualizar_view_pbi():
         except Exception as e:
             print(f"   ❌ Erro View Power BI: {e}")
         finally:
-            conn.close()
+            try:
+                close_connection()
+            except Exception:
+                pass

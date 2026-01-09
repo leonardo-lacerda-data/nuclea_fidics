@@ -2,7 +2,7 @@ import numpy as np
 import os
 import pandas as pd
 from datetime import datetime
-from src.db_connection import get_connection
+from src.db_connection import get_connection, close_connection
 from src.elt_random_dates import variar_datas_apenas
 
 # Define onde estão os CSVs (na raiz do projeto, pasta data)
@@ -82,7 +82,10 @@ def carregar_empresas():
 
     except Exception as e:
         print(f"      ❌ Erro ao inserir empresas: {e}")
-        conn.close()
+        try:
+            close_connection()
+        except Exception:
+            pass
         return {}
 
 def carregar_boletos():
@@ -140,7 +143,9 @@ def carregar_boletos():
     except Exception as e:
         print(f"      ❌ Erro ao inserir boletos: {e}")
     finally:
-        conn.close()
+        # A conexão é gerenciada e cacheada em `src.db_connection.get_connection()`;
+        # não fechamos aqui para evitar invalidar a conexão em cache usada por outras funções.
+        pass
 
 def carregar_dados():
     carregar_empresas()
