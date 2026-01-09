@@ -1,7 +1,7 @@
 import joblib
 import os
 import pandas as pd
-from src.db_connection import get_connection
+from src.db_connection import get_connection, close_connection
 from sklearn.ensemble import RandomForestClassifier
 # from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
@@ -65,7 +65,10 @@ def calcular_risco_credito(force_retrain=False):
     except Exception as e:
         print(f"❌ Erro na conexão: {e}")
     finally:
-        conn.close()
+      try:
+        close_connection()
+      except Exception:
+        pass
 
     # Preenche nulos restantes com 0 (evitar que tenhamos valores nulos)
     df_treino = df_treino.fillna(0)
@@ -186,4 +189,7 @@ def calcular_risco_credito(force_retrain=False):
         print(f"❌ Erro ao salvar previsões: {e}")
 
     finally:
-        conn.close()
+      try:
+        close_connection()
+      except Exception:
+        pass

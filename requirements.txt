@@ -1,0 +1,27 @@
+# Manipulação de Dados e Numérico
+pandas
+numpy
+
+# Banco de Dados e Variáveis de Ambiente
+oracledb
+python-dotenv
+
+# Machine Learning
+scikit-learn
+joblib
+
+# APIs e Web Scraping
+requests
+feedparser
+beautifulsoup4
+lxml
+GoogleNews
+
+# Processamento de Linguagem Natural (NLP) e IA
+spacy
+pysentimiento
+torch
+transformers
+# Fix: versão compatível do accelerate para evitar erro 'dispatch_batches'
+accelerate==0.18.0
+customtkinter

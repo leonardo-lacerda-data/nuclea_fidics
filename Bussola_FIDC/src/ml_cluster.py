@@ -4,7 +4,7 @@ import os
 import pandas as pd
 from sklearn.cluster import KMeans, DBSCAN
 from sklearn.preprocessing import StandardScaler
-from src.db_connection import get_connection
+from src.db_connection import get_connection, close_connection
 
 # Configuração de Diretórios
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -149,4 +149,7 @@ def segmentar_clientes(force_retrain = False):
         print(f"❌ Erro no Clustering: {e}")
         conn.rollback()
     finally:
-        conn.close()
+        try:
+            close_connection()
+        except Exception:
+            pass
