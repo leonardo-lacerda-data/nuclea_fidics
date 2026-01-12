@@ -6,13 +6,14 @@ from src.db_connection import get_connection
 from src.etl_api import carregar_api
 from src.etl_ingestion import carregar_dados
 from src.etl_nlp import executar_etl_noticias
+import sys
 
 
-if __name__ == "__main__":
+def run_cli():
     print("--- INICIANDO BÚSSOLA DE FIDCS (SISTEMA INTEGRADO)---")
     resposta_cria_tabela = input("   ❓ Precisa criar as tabelas? (s/n): ").lower()
-    if  resposta_cria_tabela == 's':
-    # Função para criar os bancos de dados
+    if resposta_cria_tabela == 's':
+        # Função para criar os bancos de dados
         recriar_banco_dados()
         carregar_dados()
         carregar_api()
@@ -32,9 +33,9 @@ if __name__ == "__main__":
     reposta_ml = input("   ❓ Deseja retreinar o Machine Learning? (s/n): ").lower()
     if reposta_ml == 's':
         # Função para calcular o Risco a partir de Regressão Logística
-        calcular_risco_credito(force_retrain = True)
+        calcular_risco_credito(force_retrain=True)
         # Função para o clustering a partir de K-Means
-        segmentar_clientes(force_retrain = True)
+        segmentar_clientes(force_retrain=True)
     else:
         calcular_risco_credito()
         segmentar_clientes()
@@ -43,3 +44,17 @@ if __name__ == "__main__":
     atualizar_view_pbi()
 
     print("🏁--- PROCESSO FINALIZADO COM SUCESSO ---")
+
+
+if __name__ == "__main__":
+    # Por padrão, inicia a GUI (arquivo gui.py). Use `--cli` para executar em modo terminal.
+    if "--cli" in sys.argv:
+        run_cli()
+    else:
+        try:
+            from gui import run as run_gui
+
+            run_gui()
+        except Exception as e:
+            print(f"Falha ao iniciar GUI: {e}\nInciando em modo Terminal...")
+            run_cli()

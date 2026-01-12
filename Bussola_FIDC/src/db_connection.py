@@ -8,35 +8,50 @@ _cached_creds = None
 
 
 def get_connection():
-    """Solicita ao usuário (uma vez) `user`, `password` e `dsn`, abre e retorna a conexão Oracle.
+    """Abre e retorna a conexão Oracle.
 
-    O método faz cache das credenciais e da conexão para chamadas subsequentes.
-    Não utiliza dotenv ou variáveis de ambiente internamente.
+    Prioriza variáveis de ambiente (definidas pela GUI):
+      ORA_USER, ORA_PASSWORD, ORA_HOST, ORA_PORT, ORA_SERVICE
+
+    Se todas as variáveis estiverem presentes, usa-as sem prompt interativo.
+    Caso contrário, mantém o comportamento antigo de pedir `input()` e `getpass()`.
+
+    Mantém cache de conexão e credenciais para reutilização.
     """
     global _cached_conn, _cached_creds
 
     # Retorna conexão em cache se existir e estiver ativa
     if _cached_conn:
         try:
-            # Tenta criar um cursor para validar a conexão
             _cached_conn.cursor()
             return _cached_conn
         except Exception:
-            # Conexão estava fechada ou inválida — limpa cache e tenta reconectar
             try:
                 _cached_conn.close()
             except Exception:
                 pass
             _cached_conn = None
 
-    # Solicita credenciais apenas uma vez
-    if not _cached_creds:
-        user = input("Oracle user: ").strip()
-        password = getpass.getpass("Oracle password: ")
-        dsn = input("Oracle DSN (host:port/service): ").strip()
+    # Tenta obter credenciais a partir de variáveis de ambiente (mais conveniente para a GUI)
+    env_user = os.environ.get("ORA_USER")
+    env_password = os.environ.get("ORA_PASSWORD")
+    env_host = os.environ.get("ORA_HOST")
+    env_port = os.environ.get("ORA_PORT")
+    env_service = os.environ.get("ORA_SERVICE")
+
+    if env_user and env_password and env_host and env_port and env_service:
+        user = env_user
+        password = env_password
+        dsn = f"{env_host}:{env_port}/{env_service}"
         _cached_creds = (user, password, dsn)
     else:
-        user, password, dsn = _cached_creds
+        if not _cached_creds:
+            user = input("Oracle user: ").strip()
+            password = getpass.getpass("Oracle password: ")
+            dsn = input("Oracle DSN (host:port/service): ").strip()
+            _cached_creds = (user, password, dsn)
+        else:
+            user, password, dsn = _cached_creds
 
     try:
         import oracledb
