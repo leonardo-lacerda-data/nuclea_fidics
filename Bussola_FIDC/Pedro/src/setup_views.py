@@ -1,0 +1,217 @@
+from src.db_connection import get_connection
+
+def alimentar_tabela(view, sql):
+    conn = get_connection()
+
+    if not conn: return
+    if conn:
+        cursor = conn.cursor()
+    try:
+        cursor.execute(sql)
+        print(f"   ✅ View {view} atualizada.")
+    except Exception as e:
+        print(f"   ❌ Erro View Power BI: {e}")
+    finally:
+        conn.close()
+
+def atualizar_view_ml():
+    print("📊 Atualizando View do ML..")
+
+    sql_view_ml_risco = """
+        CREATE OR REPLACE VIEW V_BF_TREINO_ML_RISCO AS
+        SELECT
+            -- Informações do boleto
+            b.id_boleto,
+            b.vl_nominal,
+            (b.dt_vencimento - b.dt_emissao) as nr_prazo_dias,
+
+            -- Informações da empresa
+            e.cd_cnae,
+            e.sg_uf,
+            COALESCE(e.vl_score_materialidade, 0) as vl_score_materialidade,
+            COALESCE(e.vl_score_quantidade, 0) as vl_score_quantidade,
+
+            -- Para ligar com as notícias
+            -- Também vai ser usado no ML em si, então precisamos que seja numérico
+            CASE 
+                WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '01' AND '03' THEN 01
+                WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '05' AND '33' THEN 02
+                WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '41' AND '43' THEN 02
+                WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '45' AND '47' THEN 03
+                WHEN SUBSTR(e.cd_cnae, 1, 2) >= '49' THEN 04
+                ELSE 05
+            END as vl_setor_macro,
+
+            -- SELIC
+            (SELECT m.vl_indicador FROM T_BF_MACRO_ECONOMIA m 
+             WHERE m.nm_indicador = 'SELIC' AND m.sg_uf = 'BR' AND m.dt_referencia <= b.dt_vencimento 
+             ORDER BY m.dt_referencia DESC FETCH FIRST 1 ROW ONLY) as tax_selic,
+
+            -- DÓLAR
+            (SELECT m.vl_indicador FROM T_BF_MACRO_ECONOMIA m 
+             WHERE m.nm_indicador = 'DOLAR' AND m.sg_uf = 'BR' AND m.dt_referencia <= b.dt_vencimento 
+             ORDER BY m.dt_referencia DESC FETCH FIRST 1 ROW ONLY) as tax_dolar,
+
+            -- DESEMPREGO
+            (SELECT m.vl_indicador FROM T_BF_MACRO_ECONOMIA m 
+             WHERE m.nm_indicador = 'TAX_DESEMPREGO' AND m.sg_uf = 'BR' AND m.dt_referencia <= b.dt_vencimento 
+             ORDER BY m.dt_referencia DESC FETCH FIRST 1 ROW ONLY) as tax_desemprego,
+
+            -- PIB
+            (SELECT m.vl_indicador FROM T_BF_MACRO_ECONOMIA m 
+             WHERE m.nm_indicador = 'IBC-BR' AND m.sg_uf = 'BR' AND m.dt_referencia <= b.dt_vencimento 
+             ORDER BY m.dt_referencia DESC FETCH FIRST 1 ROW ONLY) as indice_pib,
+
+            -- VAREJO
+            COALESCE(
+                (SELECT m.vl_indicador FROM T_BF_MACRO_ECONOMIA m 
+                 WHERE m.nm_indicador = 'IND_VAREJO' AND m.sg_uf = e.sg_uf AND m.dt_referencia <= b.dt_vencimento
+                 ORDER BY m.dt_referencia DESC FETCH FIRST 1 ROW ONLY),
+                (SELECT AVG(m2.vl_indicador) FROM T_BF_MACRO_ECONOMIA m2 WHERE m2.nm_indicador = 'IND_VAREJO')
+            ) as var_varejo,
+
+            -- INDÚSTRIA
+            COALESCE(
+                (SELECT m.vl_indicador FROM T_BF_MACRO_ECONOMIA m 
+                 WHERE m.nm_indicador = 'IND_INDUSTRIA' AND m.sg_uf = e.sg_uf AND m.dt_referencia <= b.dt_vencimento
+                 ORDER BY m.dt_referencia DESC FETCH FIRST 1 ROW ONLY),
+                (SELECT m2.vl_indicador FROM T_BF_MACRO_ECONOMIA m2 
+                 WHERE m2.nm_indicador = 'IND_INDUSTRIA' AND m2.sg_uf = 'BR'
+                   AND m2.dt_referencia <= b.dt_vencimento
+                 ORDER BY m2.dt_referencia DESC FETCH FIRST 1 ROW ONLY)
+            ) as var_industria,
+
+            -- SERVIÇOS
+            COALESCE(
+                (SELECT m.vl_indicador FROM T_BF_MACRO_ECONOMIA m 
+                 WHERE m.nm_indicador = 'IND_SERVICOS' AND m.sg_uf = e.sg_uf AND m.dt_referencia <= b.dt_vencimento
+                 ORDER BY m.dt_referencia DESC FETCH FIRST 1 ROW ONLY),
+                (SELECT AVG(m2.vl_indicador) FROM T_BF_MACRO_ECONOMIA m2 WHERE m2.nm_indicador = 'IND_SERVICOS')
+            ) as var_servicos,
+            
+            -- AGRO
+            COALESCE(
+                (SELECT m.vl_indicador FROM T_BF_MACRO_ECONOMIA m 
+                 WHERE m.nm_indicador = 'IND_AGRO' AND m.sg_uf = e.sg_uf AND m.dt_referencia <= b.dt_vencimento
+                 ORDER BY m.dt_referencia DESC FETCH FIRST 1 ROW ONLY),
+                (SELECT AVG(m2.vl_indicador) FROM T_BF_MACRO_ECONOMIA m2 WHERE m2.nm_indicador = 'IND_AGRO')
+            ) as var_agro,
+            
+            -- PECUÁRIA
+            COALESCE(
+                (SELECT m.vl_indicador FROM T_BF_MACRO_ECONOMIA m 
+                 WHERE m.nm_indicador = 'IND_PECUARIA' AND m.sg_uf = e.sg_uf AND m.dt_referencia <= b.dt_vencimento
+                 ORDER BY m.dt_referencia DESC FETCH FIRST 1 ROW ONLY),
+                (SELECT AVG(m2.vl_indicador) FROM T_BF_MACRO_ECONOMIA m2 WHERE m2.nm_indicador = 'IND_PECUARIA')
+            ) as var_pecuaria,
+            
+            -- ANÁLISE DE SENTIMENTOS
+            COALESCE(
+                (SELECT AVG(n.vl_sentimento)
+                 FROM T_BF_NOTICIAS n
+                 WHERE n.ds_setor = 
+                       CASE 
+                           WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '01' AND '03' THEN 'AGRO'
+                           WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '05' AND '33' THEN 'INDUSTRIA'
+                           -- Construção civil
+                           WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '41' AND '43' THEN 'INDUSTRIA'
+                           WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '45' AND '47' THEN 'VAREJO'
+                           WHEN SUBSTR(e.cd_cnae, 1, 2) >= '49' THEN 'SERVICOS'
+                           ELSE 'MERCADO'
+                       END
+                   AND n.dt_publicacao BETWEEN (b.dt_vencimento - 30) AND b.dt_vencimento
+                ), 0
+            ) as vl_sentimento_setorial,
+
+            -- TARGET
+            b.vl_inadimplencia as target
+
+        FROM T_BF_BOLETO b
+        JOIN T_BF_EMPRESA e ON b.id_pagador = e.id_empresa
+        """
+
+    sql_view_ml_cluster = """
+        CREATE OR REPLACE VIEW V_BF_TREINO_ML_CLUSTER AS
+        SELECT b.id_pagador,
+            COUNT(b.ID_BOLETO) AS nr_frequencia_compra,
+            AVG(b.VL_NOMINAL) AS vl_ticket_medio,
+            AVG(CASE WHEN b.NR_DIAS_ATRASO > 0 THEN b.NR_DIAS_ATRASO ELSE 0 END) AS vl_medio_dias_atraso,
+            MAX(b.VL_NOMINAL) AS vl_maior_boleto
+        FROM T_BF_BOLETO b
+        GROUP BY b.ID_PAGADOR
+        """
+    alimentar_tabela('V_BF_TREINO_ML_RISCO', sql_view_ml_risco)
+    alimentar_tabela('V_BF_TREINO_ML_CLUSTER', sql_view_ml_cluster)
+
+
+def atualizar_view_pbi():
+    print("📊 Atualizando View do Power BI..")
+
+    sql_view_pbi = """
+        CREATE OR REPLACE VIEW V_BF_ANALISE_PBI AS
+        SELECT 
+            -- Dados do boleto
+            b.id_boleto,
+            b.vl_nominal,
+            b.dt_emissao,
+            b.dt_vencimento,
+            b.nr_dias_atraso,
+            CASE 
+                WHEN b.vl_inadimplencia = 0 THEN 'Em Dia' 
+                ELSE 'Inadimplente' 
+            END as st_pagamento,
+            
+            -- Dados da empresa
+            e.id_empresa,
+            e.cd_cnae,
+            e.sg_uf,
+            
+            -- Qual o setor da empresa
+            CASE 
+                WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '01' AND '03' THEN 'AGRO'
+                WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '05' AND '33' THEN 'INDUSTRIA'
+                WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '41' AND '43' THEN 'INDÚSTRIA'
+                WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '45' AND '47' THEN 'VAREJO'
+                WHEN SUBSTR(e.cd_cnae, 1, 2) >= '49' THEN 'SERVICOS'
+                ELSE 'OUTROS'
+            END as ds_setor_economico,
+        
+            -- 3. INTELIGÊNCIA PREDITIVA (O Futuro - Random Forest)
+            ROUND(COALESCE(p.vl_probabilidade_inadimplencia, 0),4) as vl_score_risco,
+            COALESCE(p.st_faixa_risco, 'N/A') as ds_faixa_risco,
+            COALESCE(p.ds_principal, 'Em análise') as ds_motivo_risco,
+        
+            -- 4. INTELIGÊNCIA DE PERFIL (O Cluster)
+            COALESCE(c.ds_perfil, 'Não Classificado') as ds_perfil_comportamental,
+            
+            -- 5. TERMÔMETRO DE MERCADO (O NLP - Sentimento)
+            ROUND(COALESCE(
+                (SELECT AVG(n.vl_sentimento)
+                 FROM T_BF_NOTICIAS n
+                 WHERE n.ds_setor = 
+                       CASE 
+                           WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '01' AND '03' THEN 'AGRO'
+                           WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '05' AND '33' THEN 'INDUSTRIA'
+                           WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '41' AND '43' THEN 'INDUSTRIA'
+                           WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '45' AND '47' THEN 'VAREJO'
+                           WHEN SUBSTR(e.cd_cnae, 1, 2) >= '49' THEN 'SERVICOS'
+                           ELSE 'MERCADO'
+                       END
+                   AND n.dt_publicacao BETWEEN (b.dt_vencimento - 30) AND b.dt_vencimento
+                ), 0
+            ),4) AS vl_sentimento_setor,
+        
+            -- Classificação Visual do Sentimento
+            CASE 
+                WHEN (SELECT AVG(n.vl_sentimento) FROM T_BF_NOTICIAS n WHERE n.dt_publicacao BETWEEN (b.dt_vencimento - 30) AND b.dt_vencimento) > 0.05 THEN 'Otimista'
+                WHEN (SELECT AVG(n.vl_sentimento) FROM T_BF_NOTICIAS n WHERE n.dt_publicacao BETWEEN (b.dt_vencimento - 30) AND b.dt_vencimento) < -0.05 THEN 'Pessimista'
+                ELSE 'Neutro'
+            END as ds_humor_mercado
+        
+        FROM T_BF_BOLETO b
+        JOIN T_BF_EMPRESA e ON b.id_pagador = e.id_empresa
+        -- Left Join: Se o boleto for novo e não tiver passado na IA ainda, não some, só fica NULL
+        LEFT JOIN T_BF_PREDICOES p ON b.id_boleto = p.id_boleto
+        LEFT JOIN T_BF_CLUSTER c ON b.id_boleto = c.id_boleto
+        """
+    alimentar_tabela('V_BF_ANALISE_PBI', sql_view_pbi)
