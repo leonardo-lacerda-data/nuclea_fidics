@@ -62,9 +62,9 @@ class BussolaGUI(ctk.CTk):
         # Campos de texto
         self._criar_campo(frame, 1, "Usuário:", "entry_user")
         self._criar_campo(frame, 2, "Senha:", "entry_password", show="*")
-        self._criar_campo(frame, 3, "Host (IP):", "entry_host", placeholder="oracle.fiap.com.br")
-        self._criar_campo(frame, 4, "Porta:", "entry_port", placeholder="1521")
-        self._criar_campo(frame, 5, "Service/SID:", "entry_service", placeholder="ORCL")
+        self._criar_campo(frame, 3, "Host (IP):", "entry_host", default_value="oracle.fiap.com.br")
+        self._criar_campo(frame, 4, "Porta:", "entry_port", default_value="1521")
+        self._criar_campo(frame, 5, "Service/SID:", "entry_service", default_value="ORCL")
 
         # --- Botões de Ação ---
         btn_frame = ctk.CTkFrame(master=frame, fg_color="transparent")
@@ -109,11 +109,13 @@ class BussolaGUI(ctk.CTk):
                       command=lambda: self.output_text.delete('1.0', 'end')).grid(row=11, column=1, sticky="e", padx=20,
                                                                                   pady=(0, 10))
 
-    def _criar_campo(self, parent, row, label, attr_name, show=None, placeholder=""):
+    def _criar_campo(self, parent, row, label, attr_name, show=None, placeholder="", default_value=""):
         ctk.CTkLabel(parent, text=label).grid(row=row, column=0, sticky="w", padx=20, pady=5)
         entry = ctk.CTkEntry(parent, show=show, placeholder_text=placeholder)
         entry.grid(row=row, column=1, sticky="ew", padx=20, pady=5)
         setattr(self, attr_name, entry)
+        if default_value:
+            entry.insert(0, default_value)
 
     def _wrap(self, func):
         """Envelopa a função para rodar em Thread separada e não travar a janela"""
