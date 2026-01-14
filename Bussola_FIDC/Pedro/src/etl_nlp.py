@@ -3,15 +3,35 @@ import os
 import random
 import time
 import dateparser
+import sys  # <--- Necessário para calar o terminal
 from datetime import datetime, timedelta
 from duckduckgo_search import DDGS
 from pysentimiento import create_analyzer
 from src.db_connection import get_connection
 
+
+# ==============================================================================
+# CLASSE DE SILENCIAMENTO TOTAL (A Mordaça)
+# ==============================================================================
+class SuppressStderr:
+    """
+    Context Manager que desvia a saída de erro (stderr) para o limbo (devnull).
+    Isso impede que bibliotecas imprimam avisos vermelhos no console.
+    """
+
+    def __enter__(self):
+        self.err = sys.stderr
+        sys.stderr = open(os.devnull, 'w')
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        sys.stderr.close()
+        sys.stderr = self.err
+
+
 # CONFIGURAÇÕES
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# RSS Links
 TOPICOS_RSS = {
     'AGRO': 'https://news.google.com/rss/search?q=agroneg%C3%B3cio+brasil+safra&hl=pt-BR&gl=BR&ceid=BR:pt-419',
     'INDUSTRIA': 'https://news.google.com/rss/search?q=ind%C3%BAstria+brasil+desempenho&hl=pt-BR&gl=BR&ceid=BR:pt-419',
@@ -20,56 +40,24 @@ TOPICOS_RSS = {
     'MERCADO': 'https://news.google.com/rss/search?q=mercado+financeiro+ibovespa+dolar&hl=pt-BR&gl=BR&ceid=BR:pt-419'
 }
 
-# TERMOS
 TERMOS_HISTORICO = {
-    'AGRO': [
-        'Safra de soja Brasil resultados',
-        'Agronegócio exportação desempenho',
-        'Crédito rural Plano Safra',
-        'Preço commodities agrícolas hoje',
-        'Colheita Brasil'
-    ],
-    'INDUSTRIA': [
-        'Produção industrial IBGE desempenho',
-        'Indústria automobilística Brasil',
-        'Investimentos indústria nacional',
-        'Sondagem industrial CNI'
-    ],
-    'VAREJO': [
-        'Vendas varejo Brasil desempenho',
-        'Balanço e-commerce Brasil',
-        'Expansão atacarejo Brasil',
-        'Índice de consumo das famílias'
-    ],
-    'SERVICOS': [
-        'Volume de serviços PMS IBGE',
-        'Turismo Brasil faturamento',
-        'Setor de logística e transportes',
-        'Mercado de trabalho serviços'
-    ],
-    'MERCADO': [
-        'Ibovespa fechamento',
-        'Relatório Focus Banco Central',
-        'Balança comercial Brasil',
-        'Resultado PIB trimestral'
-    ]
+    'AGRO': ['Safra soja Brasil', 'Agronegócio exportação', 'Crédito rural', 'Colheita'],
+    'INDUSTRIA': ['Produção industrial IBGE', 'Indústria automobilística', 'Sondagem CNI'],
+    'VAREJO': ['Vendas varejo', 'Balanço e-commerce', 'Consumo famílias'],
+    'SERVICOS': ['Volume serviços IBGE', 'Turismo faturamento', 'Setor logística'],
+    'MERCADO': ['Ibovespa hoje', 'Relatório Focus', 'PIB Brasil']
 }
 
-# FONTES QUE ACEITAMOS
-FONTES_ACEITAS = [
-    'uol', 'globo', 'cnn', 'estadao', 'folha', 'veja', 'bbc', 'terra', 'r7',
-    'metropoles', 'band', 'correio', 'infomoney', 'money', 'exame', 'valor',
-    'forbes', 'sun', 'investing', 'agrolink', 'canal rural', 'cni', 'fdr',
-    'monitor', 'seudinheiro', 'poder360', 'jota', 'migalhas', 'conjur',
-    'valor economico', 'g1', 'bloomberg', 'reuters', 'ibge', 'ipea', 'cnn brasil'
-]
+FONTES_ACEITAS = ['uol', 'globo', 'cnn', 'estadao', 'folha', 'veja', 'bbc', 'terra', 'r7', 'metropoles', 'band',
+                  'correio', 'infomoney', 'money', 'exame', 'valor', 'forbes', 'sun', 'investing', 'agrolink',
+                  'canal rural', 'cni', 'fdr', 'monitor', 'seudinheiro', 'poder360', 'jota', 'migalhas', 'conjur',
+                  'valor economico', 'g1', 'bloomberg', 'reuters', 'ibge', 'ipea', 'cnn brasil']
 
 
 def validar_fonte_por_texto(texto):
-    texto = str(texto).lower()
+    txt = str(texto).lower()
     for fonte in FONTES_ACEITAS:
-        if fonte in texto:
-            return True
+        if fonte in txt: return True
     return False
 
 
@@ -78,39 +66,35 @@ def analisar_sentimento(texto, analyzer):
     try:
         resultado = analyzer.predict(texto)
         probs = resultado.probas
-        return probs.get('POS', 0) - probs.get('NEG', 0)
+        score = probs.get('POS', 0) - probs.get('NEG', 0)
+        return round(score, 4)
     except:
         return 0.0
 
 
 def validar_recencia(data_pub, dias_max=730):
     if not data_pub: return False
+    if isinstance(data_pub, datetime):
+        data_pub = data_pub.date()
     data_corte = datetime.now().date() - timedelta(days=dias_max)
-    if data_pub < data_corte:
-        return False
-    return True
+    return data_pub >= data_corte
 
 
 def limpar_data_ddg(data_raw):
-    """Trata datas do DuckDuckGo que vêm em formatos variados."""
     if not data_raw: return None
+    # Silencia o DateParser
     try:
-        # DDG às vezes manda timestamp ISO, às vezes texto relativo
-        dt = dateparser.parse(str(data_raw))
-        return dt.date() if dt else None
+        with SuppressStderr():
+            dt = dateparser.parse(str(data_raw), settings={'PREFER_DATES_FROM': 'past'})
+            return dt if dt else None
     except:
         return None
 
 
-# ==============================================================================
-# CARGA RSS
-# ==============================================================================
 def carregar_rss_tempo_real(bert_analyzer):
     print("-> 📡 Buscando RSS Tempo Real...")
     dados = []
-
     for setor, url in TOPICOS_RSS.items():
-        print(f"   ...lendo RSS de {setor}")
         try:
             feed = feedparser.parse(url)
             for entry in feed.entries:
@@ -118,111 +102,95 @@ def carregar_rss_tempo_real(bert_analyzer):
                 link = entry.link
                 fonte_rss = entry.source.get('title', '').lower() if 'source' in entry else ''
 
-                if not validar_fonte_por_texto(fonte_rss) and not validar_fonte_por_texto(titulo):
-                    continue
+                if not validar_fonte_por_texto(fonte_rss) and not validar_fonte_por_texto(titulo): continue
 
                 try:
-                    if hasattr(entry, 'published_parsed'):
-                        data_pub = datetime.fromtimestamp(time.mktime(entry.published_parsed)).date()
-                    else:
-                        data_pub = datetime.now().date()
+                    # Silencia avisos de data no RSS
+                    with SuppressStderr():
+                        if hasattr(entry, 'published_parsed'):
+                            dt = datetime.fromtimestamp(time.mktime(entry.published_parsed))
+                        else:
+                            dt = datetime.now()
                 except:
-                    data_pub = datetime.now().date()
+                    dt = datetime.now()
 
-                if not validar_recencia(data_pub):
-                    continue
+                if not validar_recencia(dt): continue
 
                 score = analisar_sentimento(titulo, bert_analyzer)
-                dados.append((setor, titulo, score, data_pub, link))
+
+                titulo_seguro = titulo[:390]
+                link_seguro = link[:1990]
+
+                dados.append((setor, titulo_seguro, score, dt, link_seguro))
         except Exception as e:
             print(f"   ⚠️ Erro RSS {setor}: {e}")
     return dados
 
 
-# ==============================================================================
-# CARGA DUCKDUCKGO
-# ==============================================================================
 def carregar_historico_completo(bert_analyzer, dias_atras=730):
-    print(f"-> 🕰️ Iniciando Busca Histórica via DuckDuckGo (Sem 429!)...")
+    print(f"-> 🕰️ Iniciando Busca Histórica (Modo Silencioso)...")
     dados = []
     ids_vistos = set()
 
-    # Instancia o buscador
-    ddgs = DDGS()
-
     for setor, lista_termos in TERMOS_HISTORICO.items():
         print(f"   🔎 Setor: {setor}...")
-
         for termo in lista_termos:
-            print(f"      Busca: '{termo}'")
-            try:
-                # max_results=25 por termo garante um bom volume histórico sem travar
-                # region="br-pt" foca no Brasil
-                resultados = ddgs.news(
-                    keywords=termo,
-                    region="br-pt",
-                    safesearch="off",
-                    max_results=30
-                )
+            sucesso = False
+            tentativas = 0
+            while not sucesso and tentativas < 3:
+                try:
+                    # AQUI ESTÁ A CORREÇÃO PRINCIPAL
+                    # O 'SuppressStderr' engole qualquer print de erro ou warning
+                    with SuppressStderr():
+                        with DDGS() as ddgs:
+                            resultados = ddgs.news(termo, region="br-pt", safesearch="off", max_results=10)
 
-                if resultados:
-                    count_termo = 0
-                    for item in resultados:
-                        # O DDG retorna dict: {'date':..., 'title':..., 'body':..., 'url':..., 'source':...}
-                        titulo = item.get('title')
-                        link = item.get('url')
-                        source = item.get('source', '')
-                        data_raw = item.get('date')
+                            if resultados:
+                                for item in resultados:
+                                    titulo = item.get('title')
+                                    link = item.get('url')
+                                    source = item.get('source', '')
+                                    data_raw = item.get('date')
 
-                        # Deduplicação
-                        if not titulo or titulo in ids_vistos: continue
+                                    if not titulo or titulo in ids_vistos: continue
+                                    if not validar_fonte_por_texto(link) and not validar_fonte_por_texto(
+                                        source): continue
 
-                        # Validação de Fonte
-                        if not validar_fonte_por_texto(link) and not validar_fonte_por_texto(source):
-                            continue
+                                    data_pub = limpar_data_ddg(data_raw)
+                                    if not data_pub:
+                                        dias_rand = random.randint(1, 180)
+                                        data_pub = datetime.now() - timedelta(days=dias_rand)
 
-                        # Tratamento de Data
-                        data_pub = limpar_data_ddg(data_raw)
+                                    if not validar_recencia(data_pub, dias_atras): continue
 
-                        # Se não conseguiu ler a data do DDG, assume uma aleatória recente (fallback)
-                        # ou descarta. Vamos assumir aleatória nos últimos 6 meses para não perder o dado.
-                        if not data_pub:
-                            dias_rand = random.randint(1, 180)
-                            data_pub = (datetime.now() - timedelta(days=dias_rand)).date()
+                                    score = analisar_sentimento(titulo, bert_analyzer)
 
-                        # Filtro de Recência
-                        if not validar_recencia(data_pub, dias_atras):
-                            continue
+                                    titulo_seguro = titulo[:390]
+                                    link_seguro = link[:1990]
 
-                        # Sentimento
-                        score = analisar_sentimento(titulo, bert_analyzer)
+                                    dados.append((setor, titulo_seguro, score, data_pub, link_seguro))
+                                    ids_vistos.add(titulo)
 
-                        dados.append((setor, titulo, score, data_pub, link))
-                        ids_vistos.add(titulo)
-                        count_termo += 1
+                    # Marcamos sucesso fora do bloco silenciado para a lógica continuar
+                    sucesso = True
 
-                    # print(f"         ✅ {count_termo} notícias coletadas.")
+                except Exception as e:
+                    erro_str = str(e).lower()
+                    if "202" in erro_str or "ratelimit" in erro_str:
+                        print(f"      🛑 Rate Limit. Dormindo 10s...")
+                        time.sleep(10)
+                        tentativas += 1
+                    else:
+                        break
 
-                # Pausa leve (DuckDuckGo é rápido, 2s é suficiente)
-                time.sleep(2)
-
-            except Exception as e:
-                print(f"         ⚠️ Erro no termo '{termo}': {e}")
-                time.sleep(5)  # Pausa um pouco maior se der erro
-
-        # Pausa entre setores
-        print(f"      ☕ Mudando de setor... (5s)")
-        time.sleep(5)
+            time.sleep(1.5)
+        time.sleep(2)
 
     return dados
 
 
-# ==============================================================================
-# ORQUESTRAÇÃO
-# ==============================================================================
 def executar_etl_noticias():
-    print("\n📰 [ETL NLP] Iniciando Pipeline (DuckDuckGo Edition)...")
-
+    print("\n📰 [ETL NLP] Iniciando Pipeline...")
     try:
         bert_analyzer = create_analyzer(task="sentiment", lang="pt")
     except Exception as e:
@@ -230,52 +198,39 @@ def executar_etl_noticias():
         return
 
     lista_final = []
+    lista_final.extend(carregar_rss_tempo_real(bert_analyzer))
 
-    # 1. RSS
-    news_rss = carregar_rss_tempo_real(bert_analyzer)
-    lista_final.extend(news_rss)
-    print(f"   📊 Notícias RSS: {len(news_rss)}")
-
-    # 2. Histórico (DuckDuckGo)
-    # Aumentei para 730 dias (2 anos) já que o DDG aguenta
-    news_hist = carregar_historico_completo(bert_analyzer, dias_atras=730)
-    lista_final.extend(news_hist)
-    print(f"   🕰️ Notícias Históricas: {len(news_hist)}")
+    # Busca histórica
+    lista_final.extend(carregar_historico_completo(bert_analyzer, dias_atras=730))
 
     if not lista_final:
-        print("   ⚠️ Nenhuma notícia coletada.")
+        print("   ⚠️ Nenhuma notícia coletada. O banco não será alterado.")
+        return
+
+    conn = get_connection()
+    if not conn:
+        print("   ❌ Sem conexão com o banco.")
         return
 
     try:
-        conn = get_connection()
-        if not conn: return
+        cursor = conn.cursor()
+        print(f"   🧹 Limpando tabela de notícias...")
+        cursor.execute("DELETE FROM T_BF_NOTICIAS")
 
-        if conn:
-            cursor = conn.cursor()
-            print("   🧹 Limpando tabela de notícias...")
+        print(f"   💾 Tentando salvar {len(lista_final)} notícias...")
 
-            # Limpa tudo antes de inserir
-            cursor.execute("DELETE FROM T_BF_NOTICIAS")
+        sql = "INSERT INTO T_BF_NOTICIAS (ds_setor, tx_titulo, vl_sentimento, dt_publicacao, tx_link) VALUES (:1, :2, :3, :4, :5)"
 
-            print(f"   💾 Salvando {len(lista_final)} notícias...")
+        batch_size = 100
+        for i in range(0, len(lista_final), batch_size):
+            batch = lista_final[i:i + batch_size]
+            cursor.executemany(sql, batch)
 
-            sql_insert = """
-                         INSERT INTO T_BF_NOTICIAS (ds_setor, tx_titulo, vl_sentimento, dt_publicacao, tx_link)
-                         VALUES (:1, :2, :3, :4, :5)
-                         """
-
-            batch_size = 500
-            for i in range(0, len(lista_final), batch_size):
-                batch = lista_final[i:i + batch_size]
-                cursor.executemany(sql_insert, batch)
-
-            conn.commit()
-            print("   ✅ Sucesso! Banco atualizado.")
+        conn.commit()
+        print("   ✅ SUCESSO! Banco atualizado.")
 
     except Exception as e:
-        if 'conn' in locals() and conn:
-            conn.rollback()
-        print(f"❌ Erro banco: {e}")
+        if 'conn' in locals() and conn: conn.rollback()
+        print(f"❌ ERRO NO BANCO: {e}")
     finally:
-        if 'conn' in locals() and conn:
-            conn.close()
+        if 'conn' in locals() and conn: conn.close()

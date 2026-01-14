@@ -316,7 +316,8 @@ def alimentar_tabela_macro(dfs):
         print(f"❌ [API] Erro ao inserir dados macro. Rollback executado: {e}")
 
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
 def carregar_api():
     print("\n--- UTILIZANDO API DADOS EXTERNOS ---")

@@ -1,6 +1,4 @@
-import oracledb
 from src.db_connection import get_connection
-
 
 def executar_ddl(cursor, sql, mensagem):
     try:
@@ -166,5 +164,6 @@ def recriar_banco_dados():
     executar_ddl(cursor, sql_predicoes, "Tabela T_BF_PREDICOES")
 
     conn.commit()
-    conn.close()
+    if conn:
+        conn.close()
     print("\n✅ Estrutura de Banco de Dados finalizada com sucesso!")
