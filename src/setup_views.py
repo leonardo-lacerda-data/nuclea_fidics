@@ -170,7 +170,7 @@ def atualizar_view_pbi():
             CASE 
                 WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '01' AND '03' THEN 'AGRO'
                 WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '05' AND '33' THEN 'INDUSTRIA'
-                WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '41' AND '43' THEN 'INDÚSTRIA'
+                WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '41' AND '43' THEN 'INDUSTRIA'
                 WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '45' AND '47' THEN 'VAREJO'
                 WHEN SUBSTR(e.cd_cnae, 1, 2) >= '49' THEN 'SERVICOS'
                 ELSE 'OUTROS'
