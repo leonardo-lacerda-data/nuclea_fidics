@@ -3,7 +3,8 @@ import os
 import random
 import time
 import dateparser
-import sys  # <--- Necessário para calar o terminal
+import sys
+import tqdm
 from datetime import datetime, timedelta
 from duckduckgo_search import DDGS
 from pysentimiento import create_analyzer
@@ -191,6 +192,13 @@ def carregar_historico_completo(bert_analyzer, dias_atras=730):
 
 def executar_etl_noticias():
     print("\n📰 [ETL NLP] Iniciando Pipeline...")
+
+    tqdm.tqdm = lambda *args, **kwargs: tqdm.tqdm(*args, **kwargs, disable=True)
+
+    for stream in [sys.stdout, sys.stderr]:
+        if not hasattr(stream, 'isatty'):
+            stream.isatty = lambda: False
+
     try:
         bert_analyzer = create_analyzer(task="sentiment", lang="pt")
     except Exception as e:

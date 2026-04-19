@@ -17,6 +17,7 @@ ARQUIVO_SCALER = os.path.join(MODEL_DIR, 'scaler_cluster.pkl')
 def nomear_cluster(df_clientes, resumo):
     apelidos = {}
     limite_atraso = df_clientes['VL_MEDIO_DIAS_ATRASO'].quantile(0.80)
+    print(limite_atraso)
     limite_vip = df_clientes['VL_TICKET_MEDIO'].quantile(0.90)
     for cid, row in resumo.iterrows():
         if row['VL_MEDIO_DIAS_ATRASO'] > limite_atraso:

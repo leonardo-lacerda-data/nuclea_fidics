@@ -173,7 +173,7 @@ def atualizar_view_pbi():
                 WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '41' AND '43' THEN 'INDUSTRIA'
                 WHEN SUBSTR(e.cd_cnae, 1, 2) BETWEEN '45' AND '47' THEN 'VAREJO'
                 WHEN SUBSTR(e.cd_cnae, 1, 2) >= '49' THEN 'SERVICOS'
-                ELSE 'OUTROS'
+                ELSE 'MERCADO'
             END as ds_setor_economico,
         
             -- 3. INTELIGÊNCIA PREDITIVA (O Futuro - Random Forest)
@@ -215,3 +215,15 @@ def atualizar_view_pbi():
         LEFT JOIN T_BF_CLUSTER c ON b.id_boleto = c.id_boleto
         """
     alimentar_tabela('V_BF_ANALISE_PBI', sql_view_pbi)
+
+
+    sql_view_headline = """
+        CREATE OR REPLACE VIEW V_BF_HEADLINE_PBI AS
+            SELECT 
+                dt_publicacao,
+                ds_setor,
+                tx_titulo,
+                vl_sentimento
+            FROM T_BF_NOTICIAS
+        """
+    alimentar_tabela('V_BF_HEADLINE_PBI', sql_view_headline)
