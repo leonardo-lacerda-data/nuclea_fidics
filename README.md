@@ -55,8 +55,7 @@ Siga os passos abaixo no seu terminal (Git Bash ou VS Code):
 ### Passo 1: Clonar o Repositório
 Baixe o código para a sua máquina:
 ```bash
-git clone [https://github.com/leonardo-lacerda-data/nuclea_fidics.git](https://github.com/leonardo-lacerda-data/nuclea_fidics.git)
-cd nuclea_fidics
+git clone https://github.com/leonardo-lacerda-data/nuclea_fidics.git
 ```
 
 ### Stack Tecnológica
