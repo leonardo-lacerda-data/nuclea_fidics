@@ -17,18 +17,18 @@ ARQUIVO_SCALER = os.path.join(MODEL_DIR, 'scaler_cluster.pkl')
 def nomear_cluster(df_clientes, resumo):
     apelidos = {}
 
-    limite_vip = df_clientes['VL_TICKET_MEDIO'].quantile(0.93)
-    limite_fiel = df_clientes['NR_FREQUENCIA_COMPRA'].quantile(0.90)
-    limite_atraso_critico = df_clientes['VL_MEDIO_DIAS_ATRASO'].quantile(0.90)
+    limite_vip = df_clientes['VL_TICKET_MEDIO'].quantile(0.9375)
+    limite_atraso_critico = df_clientes['VL_MEDIO_DIAS_ATRASO'].quantile(0.95)
+    limite_fiel = df_clientes['NR_FREQUENCIA_COMPRA'].quantile(0.80)
 
     for cid, row in resumo.iterrows():
         # A ordem de teste é fundamental:
         if row['VL_TICKET_MEDIO'] > limite_vip:
             apelidos[cid] = 'Cliente VIP (Ticket Alto)'
-        elif row['NR_FREQUENCIA_COMPRA'] > limite_fiel:
-            apelidos[cid] = 'Cliente Recorrente/Fiel'
         elif row['VL_MEDIO_DIAS_ATRASO'] > limite_atraso_critico:
             apelidos[cid] = 'Perfil Devedor/Atrasado'
+        elif row['NR_FREQUENCIA_COMPRA'] > limite_fiel:
+            apelidos[cid] = 'Cliente Recorrente/Fiel'
         else:
             apelidos[cid] = 'Cliente Padrão/Esporádico'
     return apelidos

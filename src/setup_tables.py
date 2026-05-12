@@ -1,4 +1,5 @@
 from src.db_connection import get_connection
+import oracledb
 
 def executar_ddl(cursor, sql, mensagem):
     try:
