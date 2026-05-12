@@ -16,16 +16,19 @@ ARQUIVO_SCALER = os.path.join(MODEL_DIR, 'scaler_cluster.pkl')
 
 def nomear_cluster(df_clientes, resumo):
     apelidos = {}
-    limite_atraso = df_clientes['VL_MEDIO_DIAS_ATRASO'].quantile(0.80)
-    print(limite_atraso)
-    limite_vip = df_clientes['VL_TICKET_MEDIO'].quantile(0.90)
+
+    limite_vip = df_clientes['VL_TICKET_MEDIO'].quantile(0.93)
+    limite_fiel = df_clientes['NR_FREQUENCIA_COMPRA'].quantile(0.90)
+    limite_atraso_critico = df_clientes['VL_MEDIO_DIAS_ATRASO'].quantile(0.90)
+
     for cid, row in resumo.iterrows():
-        if row['VL_MEDIO_DIAS_ATRASO'] > limite_atraso:
-            apelidos[cid] = 'Perfil Devedor/Atrasado'
-        elif row['VL_TICKET_MEDIO'] > limite_vip:
+        # A ordem de teste é fundamental:
+        if row['VL_TICKET_MEDIO'] > limite_vip:
             apelidos[cid] = 'Cliente VIP (Ticket Alto)'
-        elif row['NR_FREQUENCIA_COMPRA'] > df_clientes['NR_FREQUENCIA_COMPRA'].quantile(0.7):
+        elif row['NR_FREQUENCIA_COMPRA'] > limite_fiel:
             apelidos[cid] = 'Cliente Recorrente/Fiel'
+        elif row['VL_MEDIO_DIAS_ATRASO'] > limite_atraso_critico:
+            apelidos[cid] = 'Perfil Devedor/Atrasado'
         else:
             apelidos[cid] = 'Cliente Padrão/Esporádico'
     return apelidos
@@ -88,7 +91,7 @@ def segmentar_clientes(force_retrain=False):
         df_clientes['DS_PERFIL'] = df_clientes['CLUSTER_ID'].map(nomeacao)
 
         print("   🕵️‍♂️ Caçando Anomalias (DBSCAN)...")
-        dbscan = DBSCAN(eps=1.0, min_samples=3).fit(X_scaled)
+        dbscan = DBSCAN(eps=6.0, min_samples=15).fit(X_scaled)
         df_clientes['FLAG_ANOMALIA'] = np.where(dbscan.labels_ == -1, 1, 0)
 
         print("   🔄 Mapeando volta para boletos...")
