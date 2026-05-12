@@ -223,5 +223,6 @@ def atualizar_view_pbi():
             ds_setor,
             tx_titulo,
             vl_sentimento
-        FROM T_BF_NOTICIAS"""
+        FROM T_BF_NOTICIAS
+    """
     alimentar_tabela('V_BF_HEADLINE_PBI', sql_view_headline)
