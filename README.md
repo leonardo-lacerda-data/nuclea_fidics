@@ -1,28 +1,70 @@
-# Bússola de FIDCs - Solução Final (Sprint 4)
+# 🧭 Bússola de FIDCs - Data Science Challenge 2025
 
-**Equipe:** Welcome To DataFrame  
-**Parceiro:** Núclea | **Instituição:** FIAP  
-
-## 📌 Sobre o Projeto
-O **Bússola de FIDCs** é um ecossistema analítico híbrido desenvolvido para transformar o monitoramento de recebíveis de reativo para proativo. A solução integra dados transacionais (histórico de pagamentos) com processamento de linguagem natural (NLP) de notícias setoriais, entregando segmentação e predição de risco explicável.
-
-## 🛠️ Stack Tecnológico
-* **Orquestração e ETL:** Python (Pandas)
-* **Banco de Dados:** Oracle SQL (Star Schema instanciado dinamicamente via pipeline Python)
-* **Machine Learning:** Scikit-Learn (Random Forest, K-Means, DBSCAN)
-* **NLP (Análise de Sentimento):** PySentimiento (BERT)
-* **Visualização:** Power BI
-
-## 📂 Estrutura do Repositório / Entrega
-* `/01_codigo_fonte`: Contém a Interface Gráfica (GUI) e todos os scripts da pipeline de ETL, ingestão no Oracle e treinamento dos modelos de IA.
-* `/02_dashboards`: Arquivo `.pbix` contendo as visões executivas de Risco, Oportunidade e Explicabilidade de IA.
-* `/03_documentacao_e_pitch`: Apresentação oficial do projeto em PDF detalhando a arquitetura, metodologia e indicadores de negócio.
-* `/04_dados_de_amostra`: Base de dados amostral utilizada para o treinamento e validação da Sprint 4.
-
-## 🚀 Como Executar
-1. Instale as dependências listadas no projeto (ex: `pip install pandas scikit-learn pysentimiento`).
-2. Configure as credenciais de acesso ao banco Oracle nas variáveis de ambiente ou no arquivo de configuração correspondente.
-3. Execute o script principal da Interface Gráfica (GUI) para inicializar o painel de controle e acionar a pipeline de ingestão e predição.
+**Parceria:** FIAP & Núclea  
+**Turma:** 1TSCOR - Data Science  
+**Equipe:** Welcome To The DataFrame
 
 ---
-*Nota Técnica: O agendamento em nuvem está mapeado como próximo passo de arquitetura, sendo a execução atual orquestrada localmente através da GUI desenvolvida pela equipe.*
+
+## 📖 Sobre o Projeto
+O **Bússola de FIDCs** é uma solução de inteligência de dados desenvolvida para transformar a gestão de Fundos de Investimento em Direitos Creditórios (FIDCs). 
+
+O objetivo é superar a visão puramente reativa e tabular do mercado atual, integrando dados internos financeiros com sinais externos (Macroeconomia e Notícias) para antecipar riscos e identificar oportunidades de originação de crédito.
+
+### 🚀 Diferenciais da Solução
+1.  **Visão Híbrida de Dados:** Cruzamento de dados transacionais (Boletos/Sacados) com dados públicos do **IBGE (PIB Regional)** e **BACEN (Selic/Inadimplência)**.
+2.  **Predição de Risco:** Modelo de Machine Learning (Regressão Logística) que calcula a probabilidade de atraso futuro, não apenas reportando o passado.
+3.  **Inteligência de Mercado (NLP):** Monitoramento de sentimento setorial através de Processamento de Linguagem Natural (spaCy).
+4.  **Centralização:** Data Warehouse estruturado em Oracle Database alimentando Dashboards no Power BI.
+
+---
+
+## 🛠️ Arquitetura e Tecnologias
+
+O projeto está dividido em três camadas principais, desenvolvidas em paralelo pelo squad:
+
+* **Ingestão & Engenharia (Python + Oracle):** * Limpeza e normalização de dados brutos (`.csv`).
+    * Criação de *Target* (Regra de Negócio de Atraso).
+    * Persistência em banco relacional (Oracle Database).
+* **Analytics & Data Science (Python + Scikit-learn):**
+    * Enriquecimento com dados macroeconômicos.
+    * Treinamento de modelos preditivos.
+    * Análise de sentimento de notícias.
+* **Visualização (Power BI):**
+    * Dashboards interativos (Visão Executiva, Operacional e Oportunidades).
+
+## 🛠️ Pré-requisitos de Instalação
+
+Para que o projeto funcione (tanto o Script Python quanto o Power BI), você precisa configurar o ambiente abaixo:
+
+### 1. Dependências do Sistema (Obrigatório)
+Antes de rodar qualquer coisa, instale o driver que permite a conexão com o Oracle:
+* **Oracle Client for Microsoft Tools (64-bit)**
+    * [Clique aqui para baixar](https://www.oracle.com/database/technologies/appdev/ocmt.html)
+    * **Importante:** Após instalar, reinicie o computador. Sem isso, o Power BI dará erro de "Driver não encontrado".
+
+### 2. Softwares Necessários
+* **Microsoft Power BI Desktop** (Para abrir os relatórios visuais)
+    * Necessário para visualizar e editar o arquivo `.pbix`.
+    * [Download Oficial Microsoft](https://www.microsoft.com/pt-br/download/details.aspx?id=58494)
+
+## 🚀 Instalação e Execução
+
+Siga os passos abaixo no seu terminal (Git Bash ou VS Code):
+
+### Passo 1: Clonar o Repositório
+Baixe o código para a sua máquina:
+```bash
+git clone [https://github.com/leonardo-lacerda-data/nuclea_fidics.git](https://github.com/leonardo-lacerda-data/nuclea_fidics.git)
+cd nuclea_fidics
+git clone https://github.com/leonardo-lacerda-data/nuclea_fidics.git
+```
+
+### Stack Tecnológica
+* ![Python](https://img.shields.io/badge/Python-3.9+-blue) **Linguagem Principal** (Pandas, NumPy, Matplotlib).
+* ![Oracle](https://img.shields.io/badge/Oracle-Database-red) **Armazenamento** (Driver `oracledb`).
+* ![Scikit-Learn](https://img.shields.io/badge/ML-Scikit_Learn-orange) **Machine Learning**.
+* ![Power BI](https://img.shields.io/badge/PowerBI-Microsoft-yellow) **Dashboards**.
+│   └── dicionario_dados.md  # Explicação das variáveis
+│
+└── README.md
