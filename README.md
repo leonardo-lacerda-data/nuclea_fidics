@@ -61,7 +61,7 @@ git clone https://github.com/leonardo-lacerda-data/nuclea_fidics.git
 ```
 
 ### Stack Tecnológica
-* ![Python](https://img.shields.io/badge/Python-3.9+-blue) **Linguagem Principal** (Pandas, NumPy, Matplotlib).
+* ![Python](https://img.shields.io/badge/Python-3.9+-blue) **Linguagem Principal** (Pandas, NumPy, Scikit-Learn).
 * ![Oracle](https://img.shields.io/badge/Oracle-Database-red) **Armazenamento** (Driver `oracledb`).
 * ![Scikit-Learn](https://img.shields.io/badge/ML-Scikit_Learn-orange) **Machine Learning**.
 * ![Power BI](https://img.shields.io/badge/PowerBI-Microsoft-yellow) **Dashboards**.
