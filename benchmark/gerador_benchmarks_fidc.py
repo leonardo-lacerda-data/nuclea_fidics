@@ -64,7 +64,19 @@ def gerar_benchmark_risco():
     print("\n" + "-" * 50)
     print("📊 CLASSIFICATION REPORT OFICIAL - RANDOM FOREST")
     print("-" * 50)
-    print(classification_report(y_test, y_pred, target_names=nomes_classes))
+
+    # Gera o relatório e guarda na variável
+    report = classification_report(y_test, y_pred, target_names=nomes_classes)
+
+    # Imprime no terminal para você ver na hora
+    print(report)
+
+    # Salva no arquivo .txt
+    with open('rf_classification_report_oficial.txt', 'w', encoding='utf-8') as f:
+        f.write("RELATÓRIO DE AVALIAÇÃO - RANDOM FOREST (DADOS REAIS NÚCLEA)\n\n")
+        f.write(report)
+
+    print("✅ Relatório em texto salvo como 'rf_classification_report_oficial.txt'")
 
     # 2. Matriz de Confusão
     plt.figure(figsize=(8, 6))

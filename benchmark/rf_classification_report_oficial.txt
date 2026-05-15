@@ -1,0 +1,10 @@
+RELATÓRIO DE AVALIAÇÃO - RANDOM FOREST (DADOS REAIS NÚCLEA)
+
+                  precision    recall  f1-score   support
+
+      0 (Em Dia)       0.82      0.90      0.85      1497
+1 (Inadimplente)       0.69      0.52      0.59       639
+
+        accuracy                           0.79      2136
+       macro avg       0.75      0.71      0.72      2136
+    weighted avg       0.78      0.79      0.78      2136
