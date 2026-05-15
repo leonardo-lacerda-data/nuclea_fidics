@@ -25,3 +25,7 @@ transformers
 # Fix: versão compatível do accelerate para evitar erro 'dispatch_batches'
 accelerate==0.18.0
 customtkinter
+
+# Viz
+matplotlib
+seaborn
