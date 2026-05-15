@@ -2,10 +2,18 @@ import joblib
 import numpy as np
 import os
 import pandas as pd
+import warnings
 from src.utils_paths import resource_path
 from sklearn.cluster import KMeans, DBSCAN
 from sklearn.preprocessing import StandardScaler
 from src.db_connection import get_connection
+
+# Silencia o aviso dramático do Pandas exigindo SQLAlchemy para o OracleDB
+warnings.filterwarnings(
+    action='ignore',
+    category=UserWarning,
+    message='.*SQLAlchemy.*'
+)
 
 MODEL_DIR = resource_path("models")
 os.makedirs(MODEL_DIR, exist_ok=True)

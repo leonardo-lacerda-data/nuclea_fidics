@@ -1,6 +1,8 @@
 import joblib
 import os
 import pandas as pd
+import warnings
+
 from src.utils_paths import resource_path
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
@@ -8,12 +10,20 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from src.db_connection import get_connection
 
+# Silencia o aviso dramático do Pandas exigindo SQLAlchemy para o OracleDB
+warnings.filterwarnings(
+    action='ignore',
+    category=UserWarning,
+    message='.*SQLAlchemy.*'
+)
+
 # Configuração de Caminhos
 MODEL_DIR = resource_path("models")
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 ARQUIVO_MODELO = os.path.join(MODEL_DIR, 'modelo_risco.pkl')
 ARQUIVO_SCALER = os.path.join(MODEL_DIR, 'scaler_risco.pkl')
+
 
 
 def classificar_risco(prob):
