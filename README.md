@@ -31,7 +31,7 @@ O projeto está dividido em três camadas principais, desenvolvidas em paralelo 
     * Treinamento de modelos preditivos.
     * Análise de sentimento de notícias.
 * **Visualização (Power BI):**
-    * Dashboards interativos (Visão Executiva, Operacional e Oportunidades).
+    * [Dashboard interativo](https://app.powerbi.com/view?r=eyJrIjoiMjJkNDE1NmYtYjhiYi00YzliLWJmZjctOTJiOWE2MjI5YzZiIiwidCI6IjExZGJiZmUyLTg5YjgtNDU0OS1iZTEwLWNlYzM2NGU1OTU1MSIsImMiOjR9) (Visão Executiva, Operacional e Oportunidades).
 
 ## 🛠️ Pré-requisitos de Instalação
 
