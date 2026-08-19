@@ -19,6 +19,32 @@ O objetivo é superar a visão puramente reativa e tabular do mercado atual, int
 
 ---
 
+## 📊 O Dashboard
+
+A solução entrega três visões conectadas no Power BI, cada uma desenhada para um momento de decisão diferente.
+
+🔗 **[Acessar o dashboard interativo](https://app.powerbi.com/view?r=eyJrIjoiMjJkNDE1NmYtYjhiYi00YzliLWJmZjctOTJiOWE2MjI5YzZiIiwidCI6IjExZGJiZmUyLTg5YjgtNDU0OS1iZTEwLWNlYzM2NGU1OTU1MSIsImMiOjR9)**
+
+### 1. Painel de Controle de Risco — *onde está o risco?*
+
+Visão executiva da carteira. Mapa coroplético de inadimplência por UF, distribuição da carteira em faixas de risco (Baixo / Médio / Alto) calculadas pelo modelo preditivo, e a relação entre média de dias de atraso e taxa de inadimplência ao longo do tempo. Os KPIs à direita consolidam volume total, score médio de risco, % de inadimplência e o índice de sentimento de mercado.
+
+![Painel de Controle de Risco](docs/img/dashboard-01-controle-risco.png)
+
+### 2. Visão de Oportunidades — *onde originar crédito?*
+
+Inverte a leitura: em vez de mostrar perda, mapeia potencial. Traz o volume mapeado como oportunidade, o ranking de sentimento setorial extraído por NLP a partir de notícias, e uma nuvem de tendências do mercado. É a camada que permite decidir em quais setores e regiões expandir a originação.
+
+![Visão de Oportunidades](docs/img/dashboard-02-oportunidades.png)
+
+### 3. Visão Operacional — *o que fazer agora?*
+
+Nível de cliente. Monitoramento de risco por sacado ordenado por score, com um painel de alerta que gera a leitura contextual do caso — cruzando o score de risco calculado com o sentimento externo e os indicadores econômicos do período. Fecha o ciclo: do panorama da carteira até a ação sobre um sacado específico.
+
+![Visão Operacional](docs/img/dashboard-03-operacional.png)
+
+---
+
 ## 🛠️ Arquitetura e Tecnologias
 
 O projeto está dividido em três camadas principais, desenvolvidas em paralelo pelo squad:
