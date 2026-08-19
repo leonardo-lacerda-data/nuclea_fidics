@@ -27,7 +27,7 @@ A solução entrega três visões conectadas no Power BI, cada uma desenhada par
 
 ### 1. Painel de Controle de Risco — *onde está o risco?*
 
-Visão executiva da carteira. Mapa coroplético de inadimplência por UF, distribuição da carteira em faixas de risco (Baixo / Médio / Alto) calculadas pelo modelo preditivo, e a relação entre média de dias de atraso e taxa de inadimplência ao longo do tempo. Os KPIs à direita consolidam volume total, score médio de risco, % de inadimplência e o índice de sentimento de mercado.
+Visão executiva da carteira. Mapa de calor de inadimplência por UF, distribuição da carteira em faixas de risco (Baixo / Médio / Alto) calculadas pelo modelo preditivo, e a relação entre média de dias de atraso e taxa de inadimplência ao longo do tempo. Os KPIs à direita consolidam volume total, score médio de risco, % de inadimplência e o índice de sentimento de mercado.
 
 ![Painel de Controle de Risco](img/dashboard-01-controle-risco.png)
 
@@ -39,7 +39,7 @@ Inverte a leitura: em vez de mostrar perda, mapeia potencial. Traz o volume mape
 
 ### 3. Visão Operacional — *o que fazer agora?*
 
-Nível de cliente. Monitoramento de risco por sacado ordenado por score, com um painel de alerta que gera a leitura contextual do caso — cruzando o score de risco calculado com o sentimento externo e os indicadores econômicos do período. Fecha o ciclo: do panorama da carteira até a ação sobre um sacado específico.
+Nível de cliente. Monitoramento de risco por sacado ordenado por score, com um painel de alerta que gera a leitura contextual do caso, cruzando o score de risco calculado com o sentimento externo e os indicadores econômicos do período. Fecha o ciclo: do panorama da carteira até a ação sobre um sacado específico.
 
 ![Visão Operacional](img/dashboard-03-operacional.png)
 
